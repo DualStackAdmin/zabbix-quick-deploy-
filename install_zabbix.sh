@@ -22,8 +22,8 @@ echo "### Zabbix 7.4 Fully Automatic Installation Started ###"
 
 # Step 1: Download and install the Zabbix repository (Updated with the stable 'latest' link)
 echo "--> Step 1: Downloading and installing the Zabbix repository..."
-wget https://repo.zabbix.com/zabbix/7.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.4-2+ubuntu24.04_all.deb -O zabbix-release.deb
-dpkg -i zabbix-release.deb
+wget https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.4+ubuntu24.04_all.deb
+dpkg -i zabbix-release_latest_7.4+ubuntu24.04_all.deb
 apt update
 
 # Step 2: Install Zabbix components and other required packages
