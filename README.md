@@ -47,18 +47,16 @@ curl -sSL [https://github.com/DualStackAdmin/zabbix-quick-deploy-/blob/main/inst
 Step 2: Make the Script Executable
 Grant the script execution permissions to make it runnable:
 
-Bash
 
 chmod +x install_zabbix.sh
 Step 3: Set Your Password (Important!)
 Now, open the script in a text editor to set your database password:
 
-Bash
 
 nano install_zabbix.sh
 Inside the editor, find this line at the top of the script:
 
-Bash
+
 
 ZABBIX_DB_PASSWORD='your_strong_db_password'
 Replace 'your_strong_db_password' with your own secure password. To save and exit, press Ctrl + X, then Y, and Enter.
@@ -66,7 +64,6 @@ Replace 'your_strong_db_password' with your own secure password. To save and exi
 Step 4: Run the Script
 Everything is ready! Execute the script with sudo privileges:
 
-Bash
 
 sudo ./install_zabbix.sh
 The script will now automate the rest of the process for you.
