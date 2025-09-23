@@ -32,4 +32,4 @@ This method allows you to safely inspect and configure the script on your server
 Download the latest version of the script directly from this repository to your server using the following command:
 
 ```bash
-curl -LO [https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh](https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh)
+curl -LO https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh
