@@ -43,4 +43,4 @@ Using this script is incredibly simple.
 ▶️ Log in to your clean Ubuntu 24.04 server via SSH and run the following command. Make sure to replace `YourGitHubUsername` with your actual GitHub username.
 
 ```bash
-curl -sSL [https://raw.githubusercontent.com/YourGitHubUsername/zabbix-quick-deploy/main/install_zabbix.sh](https://raw.githubusercontent.com/YourGitHubUsername/zabbix-quick-deploy/main/install_zabbix.sh) | sudo bash
+curl -sSL [https://github.com/DualStackAdmin/zabbix-quick-deploy-/blob/main/install_zabbix.sh](https://raw.githubusercontent.com/YourGitHubUsername/zabbix-quick-deploy/main/install_zabbix.sh) | sudo bash
