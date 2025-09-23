@@ -1,78 +1,79 @@
-# 🚀 Zabbix Quick Deploy
+#!/bin/bash
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+# Zabbix 7.4 (Ubuntu 24.04, Nginx, MySQL) fully automatic installation script.
+# This script automates the entire installation process.
+# Repository: https://github.com/DualStackAdmin/zabbix-quick-deploy-
 
-A fully automated script to install and configure a full Zabbix 7.4 stack (Nginx, MySQL, Zabbix Server, Zabbix Agent 2) on a clean Ubuntu 24.04 server in minutes.
+# Ensure the script exits immediately if a command fails
+set -e
 
-This repository contains a fully automated script that handles the entire installation process, allowing you to deploy a production-ready Zabbix server with zero manual intervention after the initial setup.
-
----
-
-## ✨ Features
-
-* 🤖 **Fully Automated:** Once launched, the script runs non-interactively to complete the installation.
-* ⏱️ **Fast Deployment:** Get a fully functional Zabbix server up and running in just a few minutes.
-* 📦 **Complete Stack:** Installs the Zabbix server, Nginx web server, MySQL database, and Zabbix Agent 2.
-* ✍️ **Easy & Secure Configuration:** Edit your secret password locally before running the script.
-
-## 📋 Prerequisites
-
-* 💻 **Operating System:** A clean, minimal installation of **Ubuntu 24.04 (Noble Numbat)**.
-* 💾 **Server Resources (Recommended):**
-    * CPU: 2 vCPU
-    * RAM: 4 GB
-    * Disk: 20 GB
-
-## 🛠️ Usage
-
-This method allows you to safely inspect and configure the script before execution.
-
-### Step 1: Download the Script
-
-Download the latest version of the script directly from this repository to your server using the following command:
-
-```bash
-curl -LO [https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh](https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh)
-Step 2: Make the Script Executable
-Grant the script execution permissions to make it runnable:
-
-Bash
-
-chmod +x install_zabbix.sh
-Step 3: Set Your Password (Important!)
-Now, open the script in a text editor to set your database password:
-
-Bash
-
-nano install_zabbix.sh
-Inside the editor, find this line at the top of the script:
-
-Bash
-
+# --- User-configurable Parameter ---
+# Set a strong password for the Zabbix database here.
 ZABBIX_DB_PASSWORD='your_strong_db_password'
-Replace 'your_strong_db_password' with your own secure password. To save and exit, press Ctrl + X, then Y, and Enter.
 
-Step 4: Run the Script
-Everything is ready! Execute the script with sudo privileges:
 
-Bash
+# Check if the script is run as root (sudo)
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Please run this script with 'sudo'." >&2
+  exit 1
+fi
 
-sudo ./install_zabbix.sh
-The script will now automate the rest of the process for you.
+echo "### Zabbix 7.4 Fully Automatic Installation Started ###"
 
-✅ Post-Installation
-After the script finishes, it will display your server's IP address. You can access the Zabbix web interface by navigating to that IP in your web browser.
+# Step 1: Download and install the Zabbix repository
+echo "--> Step 1: Downloading and installing the Zabbix repository..."
+wget https://repo.zabbix.com/zabbix/7.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_7.4-1+ubuntu24.04_all.deb -O zabbix-release.deb
+dpkg -i zabbix-release.deb
+apt update
 
-🌐 URL: http://<your-server-ip-address>
+# Step 2: Install Zabbix components and other required packages
+echo "--> Step 2: Installing Zabbix server, frontend, agent, and MySQL server..."
+apt install -y zabbix-server-mysql zabbix-frontend-php zabbix-nginx-conf zabbix-sql-scripts zabbix-agent2 mysql-server
 
-🔑 Login Credentials:
+# Step 3: Create the database and user for Zabbix in MySQL
+echo "--> Step 3: Creating the database and user in MySQL..."
+mysql -e "DROP DATABASE IF EXISTS zabbix;"
+mysql -e "CREATE DATABASE zabbix CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+mysql -e "CREATE USER 'zabbix'@'localhost' IDENTIFIED BY '$ZABBIX_DB_PASSWORD';"
+mysql -e "GRANT ALL PRIVILEGES ON zabbix.* TO 'zabbix'@'localhost';"
+mysql -e "SET GLOBAL log_bin_trust_function_creators = 1;"
 
-Username: Admin
+# Step 4: Import the initial database schema
+ZABBIX_SQL_FILE="/usr/share/zabbix/sql-scripts/mysql/server.sql.gz"
+echo "--> Step 4: Importing database schema from '$ZABBIX_SQL_FILE'..."
+zcat $ZABBIX_SQL_FILE | mysql --user=zabbix --password="$ZABBIX_DB_PASSWORD" --database=zabbix --default-character-set=utf8mb4
+mysql -e "SET GLOBAL log_bin_trust_function_creators = 0;"
 
-Password: zabbix
+# Step 5: Configure the Zabbix server
+echo "--> Step 5: Adding the database password to the Zabbix server configuration file..."
+sed -i "s|# DBPassword=|DBPassword=$ZABBIX_DB_PASSWORD|" /etc/zabbix/zabbix_server.conf
 
-🤝 Contributing
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+# Step 6: Configure Nginx
+echo "--> Step 6: Configuring Nginx for the Zabbix frontend..."
+sed -i 's/# listen 80;/listen 80;/' /etc/zabbix/nginx.conf
+sed -i 's/# server_name example.com;/server_name _;/' /etc/zabbix/nginx.conf
+rm -f /etc/nginx/sites-enabled/default
 
-⚖️ License
-This project is licensed under the MIT License. See the LICENSE file for details.
+# Step 7: Fix file permissions for the web configuration
+echo "--> Step 7: Setting permissions for the web configuration directory..."
+chown -R www-data:www-data /etc/zabbix/web/
+chmod -R 775 /etc/zabbix/web/
+
+# Step 8: Start and enable all services
+echo "--> Step 8: Restarting and enabling all services..."
+systemctl restart zabbix-server zabbix-agent2 nginx php8.3-fpm
+systemctl enable zabbix-server zabbix-agent2 nginx php8.3-fpm
+
+SERVER_IP=$(hostname -I | awk '{print $1}')
+echo
+echo "############################################################"
+echo "### Installation Completed Successfully!                 ###"
+echo "############################################################"
+echo
+echo "To access the Zabbix web interface, open this address in your browser:"
+echo "http://$SERVER_IP"
+echo
+echo "Default login credentials:"
+echo "  Username: Admin"
+echo "  Password: zabbix"
+echo
