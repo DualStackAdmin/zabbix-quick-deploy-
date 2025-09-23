@@ -32,4 +32,45 @@ This method allows you to safely inspect and configure the script on your server
 Download the latest version of the script directly from this repository to your server using the following command:
 
 ```bash
-curl -LO https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh
+ curl -LO https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh
+
+Step 2: Make the Script Executable
+Grant the script execution permissions to make it runnable:
+
+chmod +x install_zabbix.sh
+
+Step 3: Set Your Password (Important!)
+Now, open the script in a text editor to set your database password:
+
+nano install_zabbix.sh
+
+Inside the editor, find this line at the top of the script:
+
+ZABBIX_DB_PASSWORD='your_strong_db_password'
+
+Replace 'your_strong_db_password' with your own secure password. To save and exit, press Ctrl + X, then Y, and Enter.
+
+Step 4: Run the Script
+Everything is ready! Execute the script with sudo privileges:
+
+sudo ./install_zabbix.sh
+
+The script will now automate the rest of the process for you.
+
+✅ Post-Installation
+After the script finishes, it will display your server's IP address. You can access the Zabbix web interface by navigating to that IP in your web browser.
+
+🌐 URL: http://<your-server-ip-address>
+
+🔑 Login Credentials:
+
+Username: Admin
+
+Password: zabbix
+
+🤝 Contributing
+Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
+
+⚖️ License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
