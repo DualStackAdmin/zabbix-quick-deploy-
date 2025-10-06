@@ -41,13 +41,13 @@ wget https://github.com/DualStackAdmin/zabbix-quick-deploy-/blob/main/install_za
 
 ### Step 2: Make the Script Executable
 ```bash
-chmod +x install_zabbix.sh
+chmod +x install_zabbix_ubuntu_24.04.sh
 ```
 
 ### Step 3: Run the Script
 Execute the script with `sudo` privileges.
 ```bash
-sudo ./install_zabbix.sh
+sudo ./install_zabbix_ubuntu_24.04.sh
 ```
 The script will now become interactive and ask for the following details to configure the database:
 
