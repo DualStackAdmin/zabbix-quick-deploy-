@@ -36,7 +36,7 @@ This script handles the entire installation and configuration process, including
 
 ### Step 1: Download the Script
 ```bash
-wget https://github.com/DualStackAdmin/zabbix-quick-deploy-/blob/main/install_zabbix_ubuntu_24.04.sh
+wget [https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix_ubuntu_24.04.sh](https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix_ubuntu_24.04.sh)
 ```
 
 ### Step 2: Make the Script Executable
@@ -63,7 +63,7 @@ After you provide this information, the script will complete the entire installa
 
 After the script finishes, it will display your server's IP address and login details.
 
-🌐 **URL:** `http://<your-server-ip-address>`
+🌐 **URL:** `http://<your-server-ip-address>/zabbix`
 
 🔑 **Login Credentials:**
 * Username: `Admin`
