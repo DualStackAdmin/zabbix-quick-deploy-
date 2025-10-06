@@ -36,7 +36,7 @@ This script handles the entire installation and configuration process, including
 
 ### Step 1: Download the Script
 ```bash
-wget [https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh](https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh)
+wget https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh
 ```
 
 ### Step 2: Make the Script Executable
