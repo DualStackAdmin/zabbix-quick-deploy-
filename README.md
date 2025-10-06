@@ -1,86 +1,89 @@
-# 🚀 Zabbix Quick Deploy
+# 🚀 Zabbix Quick Deploy (Optimized & Stable Version)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-An automated script to install and configure a full Zabbix 7.4 stack (Nginx, MySQL, Zabbix Server, Zabbix Agent 2) on a clean Ubuntu 24.04 server in minutes.
+An enhanced, fully automated script to install and **optimize** a full Zabbix 7.4 stack (Nginx, MySQL, Zabbix Server, Zabbix Agent 2) on a clean Ubuntu 24.04 server in minutes.
 
-This repository contains a fully automated script that handles the entire installation process, allowing you to deploy a production-ready Zabbix server with minimal effort.
+This script handles the entire installation and configuration process, including performance tuning for MySQL and PHP, allowing you to deploy a production-ready Zabbix server with minimal effort.
 
 ---
 
 ## ✨ Features
 
-* 🤖 **Fully Automated:** Once launched, the script runs non-interactively to complete the installation.  
-* ⏱️ **Fast Deployment:** Get a fully functional Zabbix server up and running in just a few minutes.  
-* 📦 **Complete Stack:** Installs the Zabbix server, Nginx web server, MySQL database, and Zabbix Agent 2.  
-* ✍️ **Easy & Secure Configuration:** Edit your secret password locally on your server before running the script.  
+* ✅ **System Update & Prep:** Automatically runs `apt update && apt upgrade` to ensure all system packages are up-to-date before installation begins.
+* 🤖 **Interactive & Secure Setup:** Prompts you to securely enter your database credentials (name, user, password) during runtime. No more editing files!
+* ⚡ **Performance Tuned:** Automatically applies best-practice performance settings for MySQL and PHP to handle a larger number of hosts.
+* ⚙️ **Automated Database Management:** Creates the MySQL database and user, grants the necessary permissions, and imports the initial Zabbix schema automatically.
+* 📦 **Complete & Modern Stack:** Installs Zabbix 7.4, Nginx, MySQL, and the modern Zabbix Agent 2.
+* 🌍 **Timezone Aware:** Automatically sets the PHP timezone to `Asia/Baku` for correct time display in the frontend.
+* ⏱️ **Fast Deployment:** Get a fully functional Zabbix server up and running in just a few minutes.
 
 ---
 
 ## 📋 Prerequisites
 
-* 💻 **Operating System:** A clean, minimal installation of **Ubuntu 24.04 (Noble Numbat)**.  
-* 💾 **Server Resources (Recommended):**  
-  * CPU: 2 vCPU  
-  * RAM: 4 GB  
-  * Disk: 20 GB  
+* 💻 **Operating System:** A clean, minimal installation of **Ubuntu 24.04 (Noble Numbat)**.
+* 🌐 **Internet Access:** Required for downloading packages.
+* 🔒 **Root or Sudo Privileges:** The script must be run with `sudo`.
+* 💾 **Server Resources (Recommended):**
+    * CPU: 2 vCPU
+    * RAM: 4 GB
+    * Disk: 20 GB
 
 ---
 
 ## 🛠️ Usage
 
-This method allows you to safely inspect and configure the script on your server before execution.
+The new process is simpler and more secure. You no longer need to edit any files manually.
 
 ### Step 1: Download the Script
+
+Get the latest version of the script from the repository.
 ```bash
-curl -LO https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix.sh
+wget [https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix_ubuntu_24.04.sh](https://raw.githubusercontent.com/DualStackAdmin/zabbix-quick-deploy-/main/install_zabbix_ubuntu_24.04.sh)
 ```
 
 ### Step 2: Make the Script Executable
-Grant the script execution permissions to make it runnable:
+
+Grant the script execution permissions.
 ```bash
-chmod +x install_zabbix.sh
+chmod +x install_zabbix_ubuntu_24.04.sh
 ```
 
-### Step 3: Set Your Password (Important!)
-Now, open the script in a text editor to set your database password:
+### Step 3: Run the Script
+
+Execute the script with `sudo` privileges.
 ```bash
-nano install_zabbix.sh
+sudo ./install_zabbix_ubuntu_24.04.sh
 ```
+The script will now become interactive and ask for the following details to configure the database:
 
-Inside the editor, find this line at the top of the script:
-```bash
-ZABBIX_DB_PASSWORD='your_strong_db_password'
-```
+* **Database Name:** The name for the Zabbix database. Press **Enter** to use the default (`zabbix`).
+* **Database User:** The MySQL user for Zabbix. Press **Enter** to use the default (`zabbix`).
+* **Database Password:** A strong password for the user. Your input will be hidden for security.
 
-Replace 'your_strong_db_password' with your own secure password.  
-To save and exit, press **Ctrl + X**, then **Y**, and **Enter**.
+After you provide this information, the script will continue and complete the entire installation automatically.
 
-### Step 4: Run the Script
-Everything is ready! Execute the script with sudo privileges:
-```bash
-sudo ./install_zabbix.sh
-```
-
-The script will now automate the rest of the process for you.
+---
 
 ### ✅ Post-Installation
 
-After the script finishes, it will display your server's IP address.  
-You can access the Zabbix web interface by navigating to that IP in your web browser.
+After the script finishes, it will display your server's IP address and login details.
 
-🌐 **URL:** `http://<your-server-ip-address>`  
+🌐 **URL:** `http://<your-server-ip-address>/zabbix`
 
-🔑 **Login Credentials:**  
-- Username: `Admin`  
-- Password: `zabbix`  
+🔑 **Login Credentials:**
+* Username: `Admin`
+* Password: `zabbix`
+
+For security, you should log in immediately and change the default password. The script will also suggest a strong, randomly generated password for you to use.
 
 ## 🤝 Contributing
 
-Contributions, issues, and feature requests are welcome!  
+Contributions, issues, and feature requests are welcome!
 Feel free to check the issues page.
 
 ## ⚖️ License
 
-This project is licensed under the **MIT License**.  
-See the LICENSE file for details.
+This project is licensed under the **MIT License**.
+See the `LICENSE` file for details.
