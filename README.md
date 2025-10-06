@@ -63,7 +63,7 @@ After you provide this information, the script will complete the entire installa
 
 After the script finishes, it will display your server's IP address and login details.
 
-🌐 **URL:** `http://<your-server-ip-address>/zabbix`
+🌐 **URL:** `http://<your-server-ip-address>`
 
 🔑 **Login Credentials:**
 * Username: `Admin`
