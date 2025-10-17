@@ -1,86 +1,125 @@
 #!/bin/bash
 
-#================================================================================
-# ASCII Art Header
-#================================================================================
-clear
-
-# Define a single color for the logo
+# Color codes
+RED='\033[0;31m'
 GREEN='\033[0;32m'
-NC='\033[0m' # No Color (to reset)
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
 
-# Print the "TurkO" logo in a single tone
-echo -e "${GREEN} ████████╗██╗   ██╗██████╗ ██╗  ██╗ ██████╗ ${NC}"
-echo -e "${GREEN} ╚══██╔══╝██║   ██║██╔══██╗██║ ██╔╝██╔═══██╗${NC}"
-echo -e "${GREEN}    ██║   ██║   ██║██████╔╝█████╔╝ ██║   ██║${NC}"
-echo -e "${GREEN}    ██║   ██║   ██║██╔══██╗██╔═██╗ ██║   ██║${NC}"
-echo -e "${GREEN}    ██║   ╚██████╔╝██║  ██║██║  ██╗╚██████╔╝${NC}"
-echo -e "${GREEN}    ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝ ${NC}"
-
-echo
-echo "--- Zabbix Automatic and Advanced Optimization Script ---"
-echo
-sleep 2
-
-#================================================================================
-# Script Body
-#================================================================================
-
-# Ensure the script exits immediately if a command fails
-set -e
-
-# Check if the script is run as root (sudo)
-if [ "$(id -u)" -ne 0 ]; then
-  echo "This script must be run as root. Please use 'sudo'." >&2
-  exit 1
-fi
-
-# --- Step 1: System Prerequisites ---
-echo "--> Step 1: Updating system and installing prerequisites..."
-apt update && apt upgrade -y
-apt install -y wget gnupg
-
-# --- Interactive User Configuration ---
-echo
-echo "### Zabbix Installation Setup ###"
-read -p "Enter the database name for Zabbix [zabbix]: " ZABBIX_DB_NAME
-ZABBIX_DB_NAME=${ZABBIX_DB_NAME:-zabbix}
-
-read -p "Enter the database username for Zabbix [zabbix]: " ZABBIX_DB_USER
-ZABBIX_DB_USER=${ZABBIX_DB_USER:-zabbix}
-
-read -sp "Enter a strong password for the database user '$ZABBIX_DB_USER': " ZABBIX_DB_PASSWORD
-echo
-if [ -z "$ZABBIX_DB_PASSWORD" ]; then
-    echo "Database password cannot be empty. Exiting." >&2
+# Root check
+if [ "$EUID" -ne 0 ]; then 
+    echo -e "${RED}This script must be run as root (use sudo)${NC}"
     exit 1
 fi
 
-echo
-echo "### Zabbix 7.4 Fully Optimized Installation Started ###"
+echo -e "${GREEN}================================${NC}"
+echo -e "${GREEN}Zabbix 7.4 Installation Script${NC}"
+echo -e "${GREEN}================================${NC}"
+echo ""
 
-# --- Step 2: Install Zabbix Repository ---
-echo "--> Step 2: Downloading and installing the Zabbix repository..."
-wget -q https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.4+ubuntu24.04_all.deb
+# Get database information from user
+echo -e "${YELLOW}Enter database information:${NC}"
+echo ""
+
+read -p "Database name (default: zabbix): " DBNAME
+DBNAME=${DBNAME:-zabbix}
+
+read -p "Database username (default: zabbix): " DBUSER
+DBUSER=${DBUSER:-zabbix}
+
+read -sp "Database password: " DBPASS
+echo ""
+
+# Password validation
+if [ -z "$DBPASS" ]; then
+    echo -e "${RED}Password cannot be empty!${NC}"
+    exit 1
+fi
+
+echo ""
+read -p "MySQL root password (if exists, press Enter if none): " MYSQL_ROOT_PASS
+echo ""
+
+echo -e "${GREEN}Confirmation:${NC}"
+echo "Database name: $DBNAME"
+echo "Database username: $DBUSER"
+echo ""
+read -p "Do you want to continue? (y/n): " CONFIRM
+
+if [ "$CONFIRM" != "y" ] && [ "$CONFIRM" != "Y" ]; then
+    echo -e "${RED}Installation cancelled${NC}"
+    exit 0
+fi
+
+echo ""
+echo -e "${GREEN}Starting installation...${NC}"
+echo ""
+
+# 1. Download Zabbix repository
+echo -e "${YELLOW}[1/10] Downloading Zabbix repository...${NC}"
+wget https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.4+ubuntu24.04_all.deb
 dpkg -i zabbix-release_latest_7.4+ubuntu24.04_all.deb
+rm -f zabbix-release_latest_7.4+ubuntu24.04_all.deb
+
+# 2. Update packages
+echo -e "${YELLOW}[2/10] Updating package list...${NC}"
 apt update
 
-# --- Step 3: Install Zabbix, Nginx, and MySQL ---
-echo "--> Step 3: Installing Zabbix, Nginx, and MySQL server..."
-apt install -y zabbix-server-mysql zabbix-frontend-php zabbix-nginx-conf zabbix-sql-scripts zabbix-agent2 mysql-server
+# 3. Install Zabbix components
+echo -e "${YELLOW}[3/10] Installing Zabbix components...${NC}"
+apt install -y zabbix-server-mysql zabbix-frontend-php zabbix-apache-conf zabbix-sql-scripts zabbix-agent2
 
-# --- Step 4: Create and Configure Database ---
-echo "--> Step 4: Creating and configuring the Zabbix database..."
-mysql -e "DROP DATABASE IF EXISTS ${ZABBIX_DB_NAME};"
-mysql -e "CREATE DATABASE ${ZABBIX_DB_NAME} CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
-mysql -e "CREATE USER '${ZABBIX_DB_USER}'@'localhost' IDENTIFIED BY '${ZABBIX_DB_PASSWORD}';"
-mysql -e "GRANT ALL PRIVILEGES ON ${ZABBIX_DB_NAME}.* TO '${ZABBIX_DB_USER}'@'localhost';"
-mysql -e "SET GLOBAL log_bin_trust_function_creators = 1;"
-zcat /usr/share/zabbix/sql-scripts/mysql/server.sql.gz | mysql --user="${ZABBIX_DB_USER}" --password="${ZABBIX_DB_PASSWORD}" --database="${ZABBIX_DB_NAME}"
-mysql -e "SET GLOBAL log_bin_trust_function_creators = 0;"
+# 4. Install Zabbix plugins
+echo -e "${YELLOW}[4/10] Installing Zabbix plugins...${NC}"
+apt install -y zabbix-agent2-plugin-mongodb zabbix-agent2-plugin-mssql zabbix-agent2-plugin-postgresql
 
-# --- Step 5: Advanced MySQL Performance Tuning ---
-echo "--> Step 5: Applying Advanced MySQL performance optimizations..."
+# 5. Install MySQL server
+echo -e "${YELLOW}[5/10] Installing MySQL server...${NC}"
+apt install -y mysql-server
+systemctl start mysql
+systemctl enable mysql
+
+sleep 3
+
+# 6. Create database
+echo -e "${YELLOW}[6/10] Creating database...${NC}"
+
+if [ -z "$MYSQL_ROOT_PASS" ]; then
+    # No root password
+    mysql <<EOF
+CREATE DATABASE IF NOT EXISTS $DBNAME CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+CREATE USER IF NOT EXISTS '$DBUSER'@'localhost' IDENTIFIED BY '$DBPASS';
+GRANT ALL PRIVILEGES ON $DBNAME.* TO '$DBUSER'@'localhost';
+SET GLOBAL log_bin_trust_function_creators = 1;
+FLUSH PRIVILEGES;
+EOF
+else
+    # With root password
+    mysql -uroot -p"$MYSQL_ROOT_PASS" <<EOF
+CREATE DATABASE IF NOT EXISTS $DBNAME CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+CREATE USER IF NOT EXISTS '$DBUSER'@'localhost' IDENTIFIED BY '$DBPASS';
+GRANT ALL PRIVILEGES ON $DBNAME.* TO '$DBUSER'@'localhost';
+SET GLOBAL log_bin_trust_function_creators = 1;
+FLUSH PRIVILEGES;
+EOF
+fi
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Error occurred while creating database!${NC}"
+    exit 1
+fi
+
+# 7. Import Zabbix database structure
+echo -e "${YELLOW}[7/10] Importing Zabbix database structure (this may take a few minutes)...${NC}"
+zcat /usr/share/zabbix/sql-scripts/mysql/server.sql.gz | mysql --default-character-set=utf8mb4 -u"$DBUSER" -p"$DBPASS" "$DBNAME"
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Error occurred while importing database structure!${NC}"
+    exit 1
+fi
+
+# 8. Advanced MySQL Performance Tuning
+echo -e "${YELLOW}[8/11] Applying Advanced MySQL performance optimizations...${NC}"
 cat <<EOF > /etc/mysql/conf.d/zabbix-optimizations.cnf
 [mysqld]
 max_connections                 = 300
@@ -104,69 +143,47 @@ EOF
 chown mysql:mysql /etc/mysql/conf.d/zabbix-optimizations.cnf
 chmod 644 /etc/mysql/conf.d/zabbix-optimizations.cnf
 
-# --- Step 6: Configure Zabbix Server (Base Settings) ---
-echo "--> Step 6: Configuring Zabbix server database connection..."
-sed -i "s|# DBPassword=|DBPassword=${ZABBIX_DB_PASSWORD}|" /etc/zabbix/zabbix_server.conf
-sed -i "s/^DBName=.*/DBName=${ZABBIX_DB_NAME}/" /etc/zabbix/zabbix_server.conf
-sed -i "s/^DBUser=.*/DBUser=${ZABBIX_DB_USER}/" /etc/zabbix/zabbix_server.conf
-
-# --- Step 7: Zabbix Server Performance Tuning ---
-echo "--> Step 7: Applying Zabbix Server performance optimizations..."
-cat <<EOF >> /etc/zabbix/zabbix_server.conf
-
-# Zabbix Server Performance Tuning
-StartPollers=100
-StartPollersUnreachable=50
-StartPingers=50
-StartTrappers=10
-StartDiscoverers=10
-StartHTTPPollers=10
-CacheSize=128M
-HistoryCacheSize=64M
-HistoryIndexCacheSize=32M
-TrendCacheSize=32M
-ValueCacheSize=256M
+# 9. Reset log_bin_trust_function_creators parameter
+echo -e "${YELLOW}[9/11] Configuring MySQL parameters...${NC}"
+if [ -z "$MYSQL_ROOT_PASS" ]; then
+    mysql <<EOF
+SET GLOBAL log_bin_trust_function_creators = 0;
 EOF
+else
+    mysql -uroot -p"$MYSQL_ROOT_PASS" <<EOF
+SET GLOBAL log_bin_trust_function_creators = 0;
+EOF
+fi
 
-# --- Step 8: PHP Performance Tuning ---
-echo "--> Step 8: Applying PHP performance optimizations..."
-PHP_INI_FILE="/etc/php/8.3/fpm/php.ini"
-sed -i "s/^max_execution_time = .*/max_execution_time = 300/" $PHP_INI_FILE
-sed -i "s/^memory_limit = .*/memory_limit = 256M/" $PHP_INI_FILE
-sed -i "s/^post_max_size = .*/post_max_size = 32M/" $PHP_INI_FILE
-sed -i "s/^upload_max_filesize = .*/upload_max_filesize = 16M/" $PHP_INI_FILE
-sed -i "s/^max_input_time = .*/max_input_time = 300/" $PHP_INI_FILE
-sed -i "s|;date.timezone =|date.timezone = Asia/Baku|" $PHP_INI_FILE
+# 10. Edit Zabbix server configuration
+echo -e "${YELLOW}[10/11] Configuring Zabbix server...${NC}"
+sed -i "s/^# DBPassword=.*/DBPassword=$DBPASS/" /etc/zabbix/zabbix_server.conf
+sed -i "s/^DBPassword=.*/DBPassword=$DBPASS/" /etc/zabbix/zabbix_server.conf
+sed -i "s/^DBName=.*/DBName=$DBNAME/" /etc/zabbix/zabbix_server.conf
+sed -i "s/^DBUser=.*/DBUser=$DBUSER/" /etc/zabbix/zabbix_server.conf
 
-# --- Step 9: Configure Nginx ---
-echo "--> Step 9: Configuring Nginx for Zabbix frontend..."
-sed -i 's/# listen 80;/listen 80;/' /etc/zabbix/nginx.conf
-sed -i 's/# server_name example.com;/server_name _;/' /etc/zabbix/nginx.conf
-ln -s -f /etc/zabbix/nginx.conf /etc/nginx/sites-enabled/zabbix.conf
-rm -f /etc/nginx/sites-enabled/default
+# 11. Start and enable services
+echo -e "${YELLOW}[11/11] Starting services...${NC}"
+systemctl restart mysql zabbix-server zabbix-agent2 apache2
+systemctl enable mysql zabbix-server zabbix-agent2 apache2
 
-# --- Step 10: Start and Enable All Services ---
-echo "--> Step 10: Restarting and enabling all services..."
-systemctl restart zabbix-server zabbix-agent2 mysql nginx php8.3-fpm
-systemctl enable zabbix-server zabbix-agent2 mysql nginx php8.3-fpm
+sleep 3
 
-# --- Final Output ---
-SERVER_IP=$(hostname -I | awk '{print $1}')
-RANDOM_ADMIN_PASS=$(openssl rand -base64 16)
-echo
-echo "####################################################################"
-echo "### Installation and Optimization Completed Successfully! ✅     ###"
-echo "####################################################################"
-echo
-echo "You can now access the Zabbix web interface at:"
-echo "http://$SERVER_IP/zabbix"
-echo
-echo "Default login credentials:"
-echo "  Username: Admin"
-echo "  Password: zabbix"
-echo
-echo "IMPORTANT: Please log in and change the default password immediately."
-echo "We suggest using this secure, randomly generated password:"
-echo "  --> New suggested password: $RANDOM_ADMIN_PASS"
-echo
-echo "####################################################################"
+# Status check
+echo ""
+echo -e "${GREEN}================================${NC}"
+echo -e "${GREEN}Installation Completed!${NC}"
+echo -e "${GREEN}================================${NC}"
+echo ""
+echo -e "${YELLOW}Service Status:${NC}"
+systemctl is-active zabbix-server >/dev/null 2>&1 && echo -e "Zabbix Server: ${GREEN}Active${NC}" || echo -e "Zabbix Server: ${RED}Inactive${NC}"
+systemctl is-active zabbix-agent2 >/dev/null 2>&1 && echo -e "Zabbix Agent2: ${GREEN}Active${NC}" || echo -e "Zabbix Agent2: ${RED}Inactive${NC}"
+systemctl is-active apache2 >/dev/null 2>&1 && echo -e "Apache2: ${GREEN}Active${NC}" || echo -e "Apache2: ${RED}Inactive${NC}"
+echo ""
+echo -e "${GREEN}To access Zabbix web interface:${NC}"
+echo -e "URL: ${YELLOW}http://$(hostname -I | awk '{print $1}')/zabbix${NC}"
+echo -e "Default username: ${YELLOW}Admin${NC}"
+echo -e "Default password: ${YELLOW}zabbix${NC}"
+echo ""
+echo -e "${RED}IMPORTANT: Change the default password immediately!${NC}"
+echo ""
